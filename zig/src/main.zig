@@ -1,5 +1,5 @@
 const std = @import("std");
-const print = std.debug.print;
+const print = std.io.getStdOut().writer().print;
 const time = std.time;
 
 const N = 32;
@@ -9,7 +9,7 @@ const nextState = [2][9]u1{
 };
 
 pub fn main() anyerror!void {
-    var cells: [N][N]u1 = initField();
+    var cells = initField();
     var nextGen: [N][N]u1 = undefined;
 
     var i: u8 = 0;
@@ -18,33 +18,33 @@ pub fn main() anyerror!void {
     }
 
     while (true) {
-        print("\x1B[2J\x1B[H", .{});
+        try print("\x1B[2J\x1B[H", .{});
 
         for (cells) |_, y| {
             for (cells[y]) |_, x| {
-                const c: *const [1:0]u8 = if (cells[y][x] == 1) "o" else "-";
-                print("{s} ", .{c});
+                const c: *const [1:0]u8 = if (cells[y][x] == 1) "#" else " ";
+                try print("{s} ", .{c});
             }
-            print("\n", .{});
+            try print("\n", .{});
         }
 
         for (cells) |_, _y| {
             for (cells[_y]) |_, _x| {
-                var count: u8 = 0;
-                const x = @intCast(i8, _x);
-                const y = @intCast(i8, _y);
-                const current: u8 = cells[_y][_x];
+                const x = @intCast(u5, _x);
+                const y = @intCast(u5, _y);
+                var count: u5 = 0;
+                const current = cells[y][x];
 
-                count += cells[@intCast(usize,(y - 1) & 0x1f)][@intCast(usize, (x + 0) & 0x1f)];
-                count += cells[@intCast(usize,(y - 1) & 0x1f)][@intCast(usize, (x + 1) & 0x1f)];
-                count += cells[@intCast(usize,(y + 0) & 0x1f)][@intCast(usize, (x + 1) & 0x1f)];
-                count += cells[@intCast(usize,(y + 1) & 0x1f)][@intCast(usize, (x + 1) & 0x1f)];
-                count += cells[@intCast(usize,(y + 1) & 0x1f)][@intCast(usize, (x + 0) & 0x1f)];
-                count += cells[@intCast(usize,(y + 1) & 0x1f)][@intCast(usize, (x - 1) & 0x1f)];
-                count += cells[@intCast(usize,(y + 0) & 0x1f)][@intCast(usize, (x - 1) & 0x1f)];
-                count += cells[@intCast(usize,(y - 1) & 0x1f)][@intCast(usize, (x - 1) & 0x1f)];
+                count += cells[y -% 1][x +% 0];
+                count += cells[y -% 1][x +% 1];
+                count += cells[y +% 0][x +% 1];
+                count += cells[y +% 1][x +% 1];
+                count += cells[y +% 1][x +% 0];
+                count += cells[y +% 1][x -% 1];
+                count += cells[y +% 0][x -% 1];
+                count += cells[y -% 1][x -% 1];
 
-                nextGen[_y][_x] = nextState[current][count];
+                nextGen[y][x] = nextState[current][count];
             }
         }
 
@@ -67,4 +67,3 @@ fn initField() [N][N]u1 {
     }
     return cells;
 }
-
